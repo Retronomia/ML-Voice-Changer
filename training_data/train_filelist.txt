@@ -1,0 +1,76 @@
+Kindred.move01.wav|Those who dread us grant us the most power.|Those who dread us grant us the most power.
+Kindred.move02.wav|We are not dreams. We are the waking.|We are not dreams. We are the waking.
+Kindred.move03.wav|The only true death is to never live.|The only true death is to never live.
+Kindred.move04.wav|There are so many ways to die.|There are so many ways to die.
+Kindred.move05a.wav|Those who run from death|Those who run from death
+Kindred.move05b.wav|stood still in life.|stood still in life.
+Kindred.move06a.wav|All will know us|All will know us
+Kindred.move06b.wav|in time.|in time.
+Kindred.move07.wav|Beauty fades. That is why it is beautiful.|Beauty fades. That is why it is beautiful.
+Kindred.move08.wav|Wolf chases what does not willingly go.|Wolf chases what does not willingly go.
+Kindred.move09.wav|Tomorrow is a hope, never a promise.|Tomorrow is a hope, never a promise.
+Kindred.tauntSion01.wav|Come, Sion, let us end this mockery.|Come, Sion, let us end this mockery.
+Kindred.tauntSion02.wav|Sometimes, death is a blessing.|Sometimes, death is a blessing.
+Kindred.attack01.wav|Embracing life means accepting death.|Embracing life means accepting death.
+Kindred.attack02.wav|Panic not when life ebbs.|Panic not when life ebbs.
+Kindred.attack03.wav|All sparks kindle new flames.|All sparks kindle new flames.
+Kindred.attack04.wav|Depart in peace.|Depart in peace.
+Kindred.attack06.wav|You shine brightly.|You shine brightly.
+Kindred.attack07.wav|Drift gently into oblivion.|Drift gently into oblivion.
+Kindred.attack08.wav|How one dies shows how one lived.|How one dies shows how one lived.
+Kindred.mark05.wav|Our mark looms over you.|Our mark looms over you.
+Kindred.mark06.wav|Treasure your final moments.|Treasure your final moments.
+Kindred.mark08.wav|Eternal twilight calls for you.|Eternal twilight calls for you.
+Kindred.mark17.wav|Your next treat, dear Wolf.|Your next treat, dear Wolf.
+Kindred.mark12.wav|Fate hunts you today.|Fate hunts you today.
+Kindred.mark14.wav|A fine life reaches its conclusion.A fine life reaches its conclusion.
+Kindred.mark20.wav|Their path is destined to cross ours.|Their path is destined to cross ours.
+Kindred.markKill05.wav|Such befalls all who bear our mark.|Such befalls all who bear our mark.
+Kindred.markKill09.wav|All your life has led to this moment.|All your life has led to this moment.
+Kindred.markKill10.wav|All life is temporary.|All life is temporary.
+Kindred.markKill15.wav|Well hunted, dear Wolf.|Well hunted, dear Wolf.
+Kindred.markKill17.wav|Return to nothing.|Return to nothing.
+Kindred.markSteal05.wav|What folly it is to snatch our marks.|What folly it is to snatch our marks.
+Kindred.itemBotRK01.wav|Forged in a land unwelcome to us.|Forged in a land unwelcome to us.
+Kindred.itemInfinityEdge02.wav|Sharp enough to slice the veil between life and death.|Sharp enough to slice the veil between life and death.
+Kindred.itemInfinityEdge03.wav|A sharper blade makes for a cleaner death.|A sharper blade makes for a cleaner death.
+Kindred.itemLastWhisper01.wav|They shall only hear my voice.|They shall only hear my voice.
+Kindred.itemBloodthirster02.wav|It courses with stolen lives.|It courses with stolen lives.
+Kindred.itemBloodthirster03.wav|They shall not ignore us so easily.|They shall not ignore us so easily.
+Kindred.tauntEkko01a.wav|We know your name child.|We know your name child.
+Kindred.tauntEkko01b.wav|Woven across countless almost-lives.|Woven across countless almost-lives.
+Kindred.itemLastWhisper03.wav|Strip away their armor.|Strip away their armor.
+Kindred.tauntKarthus01.wav|The singer mistakes melody for substance.|The singer mistakes melody for substance.
+Kindred.unknown03.wav|We will soon awaken from this pale slumber.|We will soon awaken from this pale slumber.
+Kindred.start01.wav|Without the other|Without the other
+Kindred.start02.wav|Never one|Never one
+Kindred.start03.wav|Every life|Every life
+Kindred.start04.wav|All things, dear wolf.|All things, dear wolf.
+Kindred.move20.wav|I wonder how they see me|I wonder how they see me
+Kindred.move21.wav|Feathers falling on fresh snow|Feathers falling on fresh snow
+Kindred.move22.wav|Though many try|Though many try
+Kindred.move23.wav|Only to find us sooner|Only to find us sooner
+Kindred.move24.wav|The weft and weave of fate|The weft and weave of fate
+Kindred.move25.wav|All things linger|All things linger
+Kindred.move26.wav|Yet they are never prepared|Yet they are never prepared
+Kindred.move27.wav|Forever more|Forever more
+Kindred.move28.wav|Peacefully, they go|Peacefully, they go
+Kindred.move29a.wav|They laugh|They laugh
+Kindred.move29b.wav|And dance|And dance
+Kindred.move30.wav|Wolf was sure to follow.|Wolf was sure to follow.
+Kindred.tauntUnknown03.wav|Long have we shadowed your deeds.|Long have we shadowed your deeds.
+Kindred.tauntUnknown01.wav|Rushing to meet us again, I see.|Rushing to meet us again, I see.
+Kindred.tauntRengar02.wav|Rengar is well versed in the ways of the hunter.|Rengar is well versed in the ways of the hunter.
+Kindred.markKill14.wav|More lie ahead, dear Wolf.|More lie ahead, dear Wolf.
+Kindred.W2.wav|Chase to your heart's content.|Chase to your heart's content.
+Kindred.unknown07.wav|What do all stories have in common dear Wolf|What do all stories have in common dear Wolf
+Kindred.unknown06.wav|Soon, we will remind them.|Soon, we will remind them.
+Kindred.unknown05.wav|Older than those whose footsteps|Older than those whose footsteps
+VO_Kindred_arrival_interaction_ally_Irelia_Kindred_1_2.wav|Drifting between innocence and consequence.|Drifting between innocence and consequence.
+VO_Kindred_arrival_interaction_ally_Kindred_Kalista_1_2.wav|Betrayers make for worthy prey.|Betrayers make for worthy prey.
+VO_Kindred_arrival_interaction_ally_Kindred_Maokai_1_2.wav|Strong roots, to take hold in blighted soil.|Strong roots, to take hold in blighted soil.
+VO_Kindred_arrival_interaction_ally_Kindred_Nasus_2_2.wav|All things see us on their periphery.|All things see us on their periphery.
+VO_Kindred_arrival_interaction_enemy_Kindred_CommanderLedros_1_2.wav|Abominations.|Abominations.
+VO_Kindred_arrival_interaction_ally_Kindred_Soulspinner_1_2.wav|Each strand woven with great care.|Each strand woven with great care.
+VO_Kindred_spell_resolve_ally_SpiritJourney_03.wav|An interplay of shadow, like dappled sunlight.|An interplay of shadow, like dappled sunlight.
+VO_Kindred_spell_resolve_ally_NightyNight_02.wav|We gather our strength.|We gather our strength.
