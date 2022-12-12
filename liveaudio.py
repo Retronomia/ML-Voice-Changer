@@ -3,10 +3,13 @@ import numpy as np
 import threading
 from pydub import AudioSegment
 from math import ceil
-import keyboard
 import queue
 import time
 import sounddevice as sd
+from hotkey_manager import HotkeyManager
+
+# Manages hotkeys
+hotkey_manager = HotkeyManager()
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -15,9 +18,6 @@ CHUNK = 1024
 
 INPUT_DEVICE = sd.default.device[0]
 OUTPUT_DEVICE = sd.default.device[1] #4
-EXIT_KEY = 'q'
-
-#print(sd.query_devices(kind='output'))
 
 print("Recording...")
 def stream_audio(audio_data):
@@ -32,9 +32,14 @@ def stream_audio(audio_data):
                     frames_per_buffer=CHUNK)
 
     # Stream the audio data and append it to the array
-    while not keyboard.is_pressed(EXIT_KEY):
-        chunk = stream.read(CHUNK)
-        audio_data.put(np.frombuffer(chunk, dtype=np.int16))
+    while True:
+        if not hotkey_manager.is_muted():
+            if stream.is_stopped():
+                stream.start_stream()
+            chunk = stream.read(CHUNK)
+            audio_data.put(np.frombuffer(chunk, dtype=np.int16))
+        elif stream.is_active():
+            stream.stop_stream()
 
 # Create an empty array to store the audio samples
 audio_data = queue.Queue()
@@ -69,18 +74,19 @@ outputstream = p.open(format=FORMAT,
 
 outputstream.start_stream()
 
-while audio_data.empty()==False:
-    audiobit = audio_data.get()
-
-    seg = AudioSegment(
-        audiobit.tobytes(), 
-        frame_rate=RATE,
-        sample_width=pyaudio.get_sample_size(FORMAT), 
-        channels=CHANNELS
-    )
-    for chunk in make_chunks(seg,CHUNK):
-        outputstream.write(chunk._data)
+while True:
+    while audio_data.empty()==False:
+        audiobit = audio_data.get()
+        seg = AudioSegment(
+            audiobit.tobytes(),
+            frame_rate=RATE,
+            sample_width=pyaudio.get_sample_size(FORMAT),
+            channels=CHANNELS
+        )
+        for chunk in make_chunks(seg,CHUNK):
+            # print(chunk._data)
+            outputstream.write(chunk._data)
 
 outputstream.stop_stream()
-keyboard.wait(EXIT_KEY)
+
 print("Program Exit.")
