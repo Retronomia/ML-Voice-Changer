@@ -388,6 +388,8 @@ class ConvBlock(nn.Module):
 
         self.skip_scale = nn.Conv1d(in_channels=out_channels, out_channels=n_skip, kernel_size=1)
         self.residue_scale = nn.Conv1d(in_channels=out_channels, out_channels=n_residue, kernel_size=1)
+
+
     def forward(self,x):
         filter = self.filter_conv(x)
         filter = self.filter_act(filter)
@@ -400,7 +402,7 @@ class ConvBlock(nn.Module):
 
         return residue,skip
 
-class WN_Encode(nn.Module):
+'''class WN_Encode(nn.Module):
     def __init__(self):
         super(WN_Encode,self).__init__()
 
@@ -437,7 +439,49 @@ class WN_Encode(nn.Module):
             x = residue + x #[:,:,self.dilation*(self.kernel_size-1):]
         x = self.end_conv(skip_tot)
         x = self.end_activate(x)
+        return x'''
+
+class Paper_Encode(nn.Module):
+    def __init__(self,in_channels,stride,kernel_size,padding,dilation,channels):
+        super(Paper_Encode,self).__init__()
+        self.in_channels = in_channels
+        self.stride = stride
+        self.kernel_size = kernel_size
+        self.padding = padding
+        self.dilation = dilation
+        self.encoder = nn.ModuleList()
+        self.channels = channels
+        for l in range(len(self.channels)-1):
+            self.encoder.append(nn.Conv1d(in_channels=self.channels[l],out_channels=self.channels[l+1],stride=self.stride,kernel_size=self.kernel_size,padding=self.padding,dilation=self.dilation))
+            self.encoder.append(nn.BatchNorm1d(num_features=self.channels[l+1]))
+            self.encoder.append(nn.ReLU(True))
+
+    def forward(self,x):
+        for m in self.encoder:
+            x = m(x)
         return x
+
+class Paper_Decode(nn.Module):
+    def __init__(self,in_channels,stride,kernel_size,padding,dilation,channels):
+        super(Paper_Decode,self).__init__()
+        self.in_channels = in_channels
+        self.stride = stride
+        self.kernel_size = kernel_size
+        self.padding = padding
+        self.dilation = dilation
+        self.encoder = nn.ModuleList()
+        self.channels = channels
+        for l in range(len(self.channels)-1):
+            self.encoder.append(nn.ConvTranspose1d(in_channels=self.channels[l],out_channels=self.channels[l+1],stride=self.stride,kernel_size=self.kernel_size,padding=self.padding,dilation=self.dilation))
+            self.encoder.append(nn.BatchNorm1d(num_features=self.channels[l+1]))
+            if l != len(self.channels)-2:
+                self.encoder.append(nn.ReLU(True))
+
+    def forward(self,x):
+        for m in self.encoder:
+            x = m(x)
+        return x
+
 
 class WN_Decode(nn.Module):
     def __init__(self,num_embeddings):
@@ -481,33 +525,64 @@ class WN_Decode(nn.Module):
 class WaveNet(nn.Module):
     def __init__(self):
         super(WaveNet,self).__init__()
-        self.encode = WN_Encode()
+        encodedict = dict()
+        encodedict['in_channels']=1
+        encodedict['stride']=1
+        encodedict['kernel_size']=5
+        encodedict['padding']=0
+        encodedict['dilation']=2
+        encodedict['channels'] = [1,32,64,128,256,512]
+        self.encode = Paper_Encode(**encodedict) #WN_Encode()
  
-        end_n = 256
-        self.embedding_dim = 128
+        self.embedding_dim = 512
         self.num_classes=2
 
-        self.pre_emb_conv = nn.Conv1d(in_channels=end_n,out_channels=self.embedding_dim,kernel_size=1,stride=1)
+        self.pre_emb_conv = nn.Conv1d(in_channels=encodedict['channels'][-1],out_channels=self.embedding_dim,kernel_size=1,stride=1)
 
         self.num_embeddings = 256
         commitment_cost = .25
         decay = .99 
+        num_epochs = 40
+        num_training_samples = 10
+        batch_size = 10
+        device='cpu'
+        #self.vq_vae = NSVQ(self.num_embeddings, self.embedding_dim, num_epochs, num_training_samples, batch_size, device):
         self.vq_vae = VQEMA(num_embeddings=self.num_embeddings,embedding_dim=self.embedding_dim,commitment_cost=commitment_cost,decay=decay)
 
-        self.decoder = WN_Decode(self.embedding_dim+1)
+        self.labelemb = torch.nn.Embedding(self.num_classes,self.embedding_dim)
 
+        decodedict = dict()
+        decodedict['in_channels']=1
+        decodedict['stride']=1
+        decodedict['kernel_size']=5
+        decodedict['padding']=0
+        decodedict['dilation']=2
+        decodedict['channels'] = [513,256,128,64,32,1]
+        self.decoder = Paper_Decode(**decodedict) #WN_Decode(self.embedding_dim+1)
 
 
     def forward(self,x,labels):
         encode = self.encode(x)
+        #print(encode.shape)
+
         x_recon = self.pre_emb_conv(encode)
 
 
         loss,quantized,perplexity,_  = self.vq_vae(x_recon)
-        #one_hot_y = labels.repeat((1,x_recon.shape[2],1)).permute(2,0,1) #torch.eye(self.num_classes, device=labels.device)[labels]
-        one_hot_y = labels.repeat((1,quantized.shape[2],1)).permute(2,0,1) #torch.eye(self.num_classes, device=labels.device)[labels]
+        #quantized = self.vq_vae(x_recon)
+        #one_hot_y = labels.repeat((1,x_recon.shape[2],1)).permute(2,0,1) #torch.eye(self.num_classes, device=labels.device)[labels
+        one_hot_y =  torch.eye(quantized.shape[2], device=labels.device)[labels] #self.labelemb(labels.view(-1,1)) #torch.eye(self.num_classes, device=labels.device)[labels]]
+        one_hot_y = one_hot_y.reshape(quantized.shape[0],1,-1)
+        #print(one_hot_y.shape)
+        #print(quantized.shape)
         #print(one_hot_y.shape,quantized.shape)
         quantized = torch.cat([quantized, one_hot_y], 1)
+        #print(quantized.shape)
+        #plt.plot(quantized[0][0].detach().numpy(),label='quantized')
+        #plt.plot(x_recon[0][0].detach().numpy(),label='x_recon')
+        #print(torch.unique(quantized[0][0]))
+        #plt.legend()
+        #plt.show()
 
         #print(quantized[0])
         #print(quantized.shape)
@@ -515,8 +590,8 @@ class WaveNet(nn.Module):
         x_recon = self.decoder(quantized)
         x_recon = torch.tanh(x_recon)
 
-        return  x_recon #,loss, perplexity
-    
+        return  x_recon,loss, perplexity
+import matplotlib.pyplot as plt
 '''class LinSpace(nn.Module):
     def __init__(self,):
         super(LinSpace,self).__init__()
@@ -534,6 +609,160 @@ class WaveNet(nn.Module):
         wad
         return x'''
 
+import torch.distributions.normal as normal_dist
+import torch.distributions.uniform as uniform_dist
+import numpy as np
+
+class NSVQ(torch.nn.Module):
+    def __init__(self, num_embeddings, embedding_dim, num_epochs, num_training_samples, batch_size, device,
+                 discarding_threshold=0.01, num_first_cbr=10, first_cbr_coefficient=0.005, second_cbr_coefficient=0.03,
+                 initialization='normal'):
+        super(NSVQ, self).__init__()
+
+        """
+        Inputs:
+        
+        1. num_embeddings = Number of codebook entries
+        
+        2. embedding_dim = Embedding dimension (dimensionality of each input data sample or codebook entry)
+        
+        3. num_epochs = Total number of epochs for training (one epoch corresponds to fetching whole train set)
+        
+        4. num_training_samples = Total number of samples in train set
+        
+        5. batch_size = Number of data samples in one training batch
+        
+        6. device = The device which executes the code (CPU or GPU)
+        
+        ########## change the following inputs based on your application ##########
+        
+        7. discarding_threshold = Percentage threshold for discarding unused codebooks
+        
+        8. num_first_cbr = Number of times to perform codebook replacement function in the first codebook replacement 
+                            period                
+        9. first_cbr_coefficient = Coefficient which determines num of batches for the first codebook replacement cycle
+        
+        10. second_cbr_coefficient = Coefficient which determines num of batches for the second codebook replacement cycle
+        
+        11. initialization = Initial distribution for codebooks
+        """
+
+        self.num_embeddings = num_embeddings
+        self.embedding_dim = embedding_dim
+        self.batch_counter = 0
+        self.eps = 1e-12
+        self.device = device
+
+        self.num_epochs = num_epochs
+        self.num_training_samples = num_training_samples
+        self.batch_size = batch_size
+
+        self.num_total_updates = np.floor((num_training_samples/batch_size) * num_epochs)
+        self.first_cbr_cycle = np.floor(first_cbr_coefficient * self.num_total_updates)
+        self.first_cbr_period = num_first_cbr * self.first_cbr_cycle
+        self.second_cbr_cycle = np.floor(second_cbr_coefficient * self.num_total_updates)
+        self.discarding_threshold = discarding_threshold
+        # Index of transition batch between first and second codebook replacement periods
+        self.transition_value = (np.ceil(self.first_cbr_period/self.second_cbr_cycle) + 1) * self.second_cbr_cycle
+
+        if initialization == 'normal':
+            codebooks = torch.randn(self.num_embeddings, self.embedding_dim, device=device)
+
+        elif initialization == 'uniform':
+            codebooks = uniform_dist.Uniform(-1 / self.num_embeddings, 1 / self.num_embeddings).sample(
+                [self.num_embeddings, self.embedding_dim])
+
+        else:
+            raise ValueError("initialization should be one of the 'normal' and 'uniform' strings")
+
+        self.codebooks = torch.nn.Parameter(codebooks, requires_grad=True)
+
+        # Counter variable which contains number of times each codebook is used
+        self.codebooks_used = torch.zeros(self.num_embeddings, device=device)
+
+    def forward(self,input_data):
+
+        """
+        This function performs the main proposed vector quantization function.
+
+        N: number of input data samples
+        K: num_embeddings (number of codebook entries)
+        D: embedding_dim (dimensionality of each input data sample or codebook entry)
+
+        input: input_data (input data matrix which is going to be vector quantized | shape: (NxD) )
+        output: quantized_input (vector quantized version of input data matrix | shape: (NxD) )
+        """
+
+        # compute the distances between input and codebooks vectors
+        distances = (torch.sum(input_data ** 2, dim=1, keepdim=True)
+                     - 2 * (torch.matmul(input_data, self.codebooks.t()))
+                     + torch.sum(self.codebooks.t() ** 2, dim=0, keepdim=True))
+
+        min_indices = torch.argmin(distances, dim=1)
+
+        best_entries = self.codebooks[min_indices]
+        random_vector = normal_dist.Normal(0, 1).sample(input_data.shape).to(self.device)
+
+        norm_best_entries = (input_data - best_entries).square().sum(dim=1, keepdim=True).sqrt()
+        norm_random_vector = random_vector.square().sum(dim=1, keepdim=True).sqrt()
+
+        # defining vector quantization error
+        vq_error = (norm_best_entries / norm_random_vector + self.eps) * random_vector
+
+        quantized_input = input_data + vq_error
+
+        with torch.no_grad():
+            self.codebooks_used[min_indices] += 1
+            self.batch_counter += 1
+
+        # Checking whether it is the time to perform codebook replacement
+        if ((self.batch_counter % self.first_cbr_cycle == 0) & (self.batch_counter <= self.first_cbr_period)):
+            self.replace_unused_codebooks(self.first_cbr_cycle)
+
+        if self.batch_counter == self.transition_value:
+            self.replace_unused_codebooks(np.remainder(self.transition_value, self.first_cbr_period))
+
+        if ((self.batch_counter % self.second_cbr_cycle == 0) &
+                (self.transition_value < self.batch_counter <= self.num_total_updates - self.second_cbr_cycle)):
+            self.replace_unused_codebooks(self.second_cbr_cycle)
+
+        return quantized_input
+
+
+    def replace_unused_codebooks(self, num_batches):
+
+        """
+        This function gets the number of batches as input and replaces the codebooks which are used less than a
+        threshold percentage (discarding_threshold) during these number of batches with the active (used) codebooks
+
+        input: num_batches (number of batches during which we determine whether the codebook is used or unused)
+        """
+
+        with torch.no_grad():
+
+            unused_indices = torch.where((self.codebooks_used.cpu() / num_batches) < self.discarding_threshold)[0]
+            used_indices = torch.where((self.codebooks_used.cpu() / num_batches) >= self.discarding_threshold)[0]
+
+            unused_count = unused_indices.shape[0]
+            used_count = used_indices.shape[0]
+
+            if used_count == 0:
+                print(f'####### used_indices equals zero / shuffling whole codebooks ######')
+                self.codebooks += self.eps * torch.randn(self.codebooks.size(), device=self.device).clone()
+            else:
+                used = self.codebooks[used_indices].clone()
+                if used_count < unused_count:
+                    used_codebooks = used.repeat(int((unused_count / (used_count + self.eps)) + 1), 1)
+                    used_codebooks = used_codebooks[torch.randperm(used_codebooks.shape[0])]
+                else:
+                    used_codebooks = used
+
+                self.codebooks[unused_indices] *= 0
+                self.codebooks[unused_indices] += used_codebooks[range(unused_count)] + self.eps * torch.randn(
+                    (unused_count, self.embedding_dim), device=self.device).clone()
+
+            print(f'************* Replaced ' + str(unused_count) + f' codebooks *************')
+            self.codebooks_used[:] = 0.0
 
 
 class VQEMA(nn.Module):
@@ -559,17 +788,17 @@ class VQEMA(nn.Module):
         input_shape = inputs.shape
         flat_input = inputs.view(-1,self.embedding_dim) # (-1,C)
 
+        dimval = 1
         #calculate distances
-        distances = (torch.sum(flat_input**2, dim=1, keepdim=True) + torch.sum(self.embedding.weight**2, dim=1) - 2 * torch.matmul(flat_input, self.embedding.weight.t()))
+        distances = (torch.sum(flat_input**2, dim=dimval, keepdim=True) + torch.sum(self.embedding.weight**2, dim=dimval) - 2 * torch.matmul(flat_input, self.embedding.weight.t()))
 
         #encoding
-        encoding_indices = torch.argmin(distances,dim=1).unsqueeze(1)
+        encoding_indices = torch.argmin(distances,dim=dimval).unsqueeze(1)
         encodings = torch.zeros(encoding_indices.shape[0],self.num_embeddings,device=inputs.device)
         encodings.scatter_(1,encoding_indices,1)
 
         #quantize
         quantized = torch.matmul(encodings,self.embedding.weight).view(input_shape)
-
         #use EMA
         if self.training:
             self.ema_cluster_size = self.ema_cluster_size * self.decay + (1 - self.decay) * torch.sum(encodings, 0)
@@ -589,6 +818,7 @@ class VQEMA(nn.Module):
         
         # Straight Through Estimator
         quantized = inputs + (quantized - inputs).detach()
+
         avg_probs = torch.mean(encodings, dim=0)
         perplexity = torch.exp(-torch.sum(avg_probs * torch.log(avg_probs + 1e-10)))
         
