@@ -53,9 +53,9 @@ class Identity(nn.Module):
         return x
 
 class MultiScaleDiscriminator(nn.Module):
-    def __init__(self):
+    def __init__(self,num_classes):
         super(MultiScaleDiscriminator, self).__init__()
-
+        self.num_classes = num_classes
         self.pooling = nn.ModuleList(
             [Identity()] +
             [nn.AvgPool1d(kernel_size=4, stride=2, padding=1, count_include_pad=False) for _ in range(1, 3)]
@@ -64,9 +64,11 @@ class MultiScaleDiscriminator(nn.Module):
         self.discriminators = nn.ModuleList(
             [Discriminator() for _ in range(3)]
         )
-    def forward(self,x):
+    def forward(self,x,labels):
         ret = list()
-        
+        one_hot_y = torch.eye(self.num_classes, device=labels.device)[labels].repeat((1,1,1)).permute(1,0,2)
+
+        x = torch.cat([x, one_hot_y], 2)
         for pool, disc in zip(self.pooling, self.discriminators):
             x = pool(x)
             ret.append(disc(x))
@@ -106,8 +108,9 @@ class ResStack(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self,n_channels):
+    def __init__(self,n_channels,num_classes):
         super(Generator, self).__init__()
+        self.num_classes = num_classes
         self.mel_channel = n_channels #mel_channel
 
         self.generator = nn.Sequential(
@@ -140,7 +143,9 @@ class Generator(nn.Module):
             nn.Tanh(),
         )
 
-    def forward(self, mel):
+    def forward(self, mel,labels):
+        one_hot_y = torch.eye(self.num_classes, device=labels.device)[labels].repeat((mel.shape[1],1,1)).permute(1,0,2)
+        mel = torch.cat([mel, one_hot_y], 2)
         mel = (mel + 5.0) / 5.0 # roughly normalize spectrogram
         return self.generator(mel)
 
@@ -175,3 +180,4 @@ class Generator(nn.Module):
         audio = audio.short()
 
         return 
+
